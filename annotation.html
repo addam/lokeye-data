@@ -20,7 +20,7 @@ function shuffle(array)
 function recalculate()
 {
     if (sorting) {
-        sortIndex = Number(sorting.value) || 0;
+        sortIndex = sorting.selectedIndex;
         container.innerHTML = "";
     }
     shuffle(annotations);
@@ -31,6 +31,7 @@ function recalculate()
         var option = document.createElement("option");
         option.name = i;
         option.textContent = columns[i];
+        option.selected = (i == sortIndex);
         sorting.appendChild(option);
     }
     container.appendChild(sorting);
@@ -38,13 +39,13 @@ function recalculate()
     groups = [];
     divs = [];
     for (a of annotations) {
-        i = a[sortIndex + 4] - 1;
+        var i = a[sortIndex + 4] - 1;
         while (i >= groups.length) {
             groups.push([]);
         }
         groups[i].push(a);
     }
-    for (i in groups) {
+    for (var i in groups) {
         container.appendChild(document.createElement("hr"));
         var div = document.createElement("div");
         for (a of groups[i]) {
@@ -63,7 +64,7 @@ function recalculate()
             }
             lnk.href = tmp_img.src = a[0];
             lnk.onmouseover = function(event) {
-                hover = event.target;
+                hover = event.target.parentElement;
             }
             lnk.onmouseout = function(event) {
                 hover = undefined;
@@ -99,7 +100,7 @@ function download()
         button.textContent = "Download JSON";
     } else {
         button.downloaded = true;
-        container.textContent = JSON.stringify(annotations);
+        container.textContent = "var columns = " + JSON.stringify(columns) + ";\nvar annotations = " +JSON.stringify(annotations) + ";\n";
         button.textContent = "Show images";
     }
 }
