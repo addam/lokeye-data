@@ -1,0 +1,112 @@
+<script src="annotations.js">
+    // columns = [...]
+	// annotations = [[filename, x, y, r, ...], ...]
+</script>
+<script>
+var sorting;
+var sortIndex = 0;
+var divs;
+var hover;
+function shuffle(array)
+{
+	for (var i = array.length - 1; i > 1; i--) {
+        var j = Math.floor(Math.random() * i);
+		var tmp = array[i];
+		array[i] = array[j];
+		array[j] = tmp;
+	}
+}
+
+function recalculate()
+{
+    if (sorting) {
+        sortIndex = Number(sorting.value) || 0;
+        container.innerHTML = "";
+    }
+    shuffle(annotations);
+    
+    sorting = document.createElement("select");
+    sorting.onchange = recalculate;
+    for (var i=0; i<columns.length; i++) {
+        var option = document.createElement("option");
+        option.name = i;
+        option.textContent = columns[i];
+        sorting.appendChild(option);
+    }
+    container.appendChild(sorting);
+    
+    groups = [];
+    divs = [];
+    for (a of annotations) {
+        i = a[sortIndex + 4] - 1;
+        while (i >= groups.length) {
+            groups.push([]);
+        }
+        groups[i].push(a);
+    }
+    for (i in groups) {
+        container.appendChild(document.createElement("hr"));
+        var div = document.createElement("div");
+        for (a of groups[i]) {
+            var lnk = document.createElement("a");
+            var canvas = document.createElement("canvas");
+            canvas.width = canvas.height = 5 * a[3];
+            canvas.dataRow = a;
+            var tmp_img = new Image();
+            tmp_img.canvas = canvas;
+            tmp_img.pos = [a[1], a[2]];
+            tmp_img.onload = function (evt) {
+                var img = evt.target, canvas = img.canvas, ctx = canvas.getContext("2d");
+                ctx.imageSmoothingEnabled = false;
+                var pos = img.pos, offsx = canvas.width / 2 - pos[0], offsy = canvas.height / 2 - pos[1];
+                ctx.drawImage(img, offsx, offsy, img.width, img.height);
+            }
+            lnk.href = tmp_img.src = a[0];
+            lnk.onmouseover = function(event) {
+                hover = event.target;
+            }
+            lnk.onmouseout = function(event) {
+                hover = undefined;
+            }
+            lnk.appendChild(canvas);
+            div.appendChild(lnk);
+        }
+        container.appendChild(div);
+        divs[i] = div;
+    }
+}
+
+window.onkeypress = function(event)
+{
+    var index = Number(event.key);
+    if (hover && index > 0) {
+        while (index > divs.length) {
+            container.appendChild(document.createElement("hr"));
+            var div = document.createElement("div");
+            divs.push(div);
+            container.appendChild(div);
+        }
+        divs[index - 1].appendChild(hover);
+        hover.dataRow[sortIndex + 4] = index;
+    }
+}
+
+function download()
+{
+    if (button.downloaded) {
+        button.downloaded = false;
+        recalculate();
+        button.textContent = "Download JSON";
+    } else {
+        button.downloaded = true;
+        container.textContent = JSON.stringify(annotations);
+        button.textContent = "Show images";
+    }
+}
+
+window.onload = recalculate;
+</script>
+<style>
+</style>
+<button id="button" onclick="download();">Download JSON</button>
+<div id="container"></div>
